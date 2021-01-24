@@ -6,27 +6,26 @@ import org.upstox.tickerService.service.FileDataService;
 import org.upstox.tickerService.service.InMemoryStorageService;
 import org.upstox.tickerService.service.WebSocketService;
 
-import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Logger;
 
 public class TickerService {
 
+    private Logger logger = Logger.getLogger(getClass().getName());
     public static void main(String[] args){
-        // add event bus one for tick event other for bar event
-        // whenever ticker happens send that tick to storage service
-        // onTick update bar and raise bar event for websocket service
-        // capture bar event and send updates
-        // avoid synchronization
 
-        Queue<Tick> tickerQueue = new LinkedList<Tick>();
-        Queue<Bar> barQueue = new LinkedList<Bar>();
+        Queue<Tick> tickerQueue = new ConcurrentLinkedQueue<>();
+        Queue<Bar> barQueue = new ConcurrentLinkedQueue<>();
 
         FileDataService dataService = new FileDataService(tickerQueue);
-        InMemoryStorageService storageService = new InMemoryStorageService(tickerQueue, barQueue);
+        InMemoryStorageService storageService =
+                new InMemoryStorageService(tickerQueue, barQueue);
         WebSocketService socketService = new WebSocketService(barQueue);
 
         (new Thread(dataService)).start();
         (new Thread(storageService)).start();
         (new Thread(socketService)).start();
+
     }
 }

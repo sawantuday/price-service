@@ -5,96 +5,81 @@ import org.upstox.tickerService.model.Tick;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class FileDataService implements DataService, Runnable {
 
     private final Queue<Tick> tickerQueue;
     private final Gson gson;
     private long lastMsgTS;
+    private Logger logger = Logger.getLogger(getClass().getName());
 
     public FileDataService(Queue<Tick> tickerQueue) {
         this.tickerQueue = tickerQueue;
         this.gson = new Gson();
     }
 
+    private BufferedReader getBufferedReader() throws FileNotFoundException {
+        URL url = getClass().getClassLoader().getResource("trades.json");
+        if(url == null){
+            return null;
+        }
+        File file = new File(url.getPath());
+        FileReader fileReader = new FileReader(file);
+        return new BufferedReader(fileReader);
+    }
+
     public void getTradeData(){
         try {
-            URL url = getClass().getClassLoader().getResource("trades.json");
-            File file = new File(url.getPath());
-            FileReader fileReader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            BufferedReader reader = getBufferedReader();
 
-            int limit = 0;
-            String line;
-            lastMsgTS = 1538409725339216503L;
-            while((line = bufferedReader.readLine()) != null){
+            String line = reader.readLine();
+            if(line != null){   // initialize last timestamp
+                Tick tick = gson.fromJson(line, Tick.class);
+                lastMsgTS = tick.getTimestamp();
                 onLine(line);
-                if(++limit > 10){
-                    break;
-                }
             }
+
+            while((line = reader.readLine()) != null){
+                onLine(line);
+            }
+
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private void onLine(String line) throws InterruptedException {
+    @Override
+    public void onLine(String line) {
         Tick tick = gson.fromJson(line, Tick.class);
+
+        // sleep till time to release this ticker
         long delayNS = tick.getTimestamp() - lastMsgTS;
-        System.out.println(delayNS);
-        String utc = Instant.ofEpochSecond(0L, tick.getTimestamp())
-                .atZone(ZoneId.of("Asia/Kolkata"))
-                .format(DateTimeFormatter.ofPattern(
-                        "dd-MM-uuuu HH:mm:ss" ,
-                        Locale.ENGLISH
-                ));
-        System.out.println(utc);
-        if(delayNS > 0){
-            long durationInMs = TimeUnit.NANOSECONDS.toMillis(delayNS);
-            Thread.sleep(durationInMs);
+        try {
+            Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNS));
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
         }
 
-        lastMsgTS = tick.getTimestamp();
-
         System.out.println(tick);
-
-        tickerQueue.add(tick);
-
+        lastMsgTS = tick.getTimestamp();    // update lastMsgTimestamp
+        tickerQueue.add(tick);              // send this tick to processing
     }
 
+    @Override
     public void run() {
-
+        getTradeData();
     }
 
     public static void main(String[] args) {
         FileDataService fileDataService = new FileDataService(new LinkedList<>());
         fileDataService.getTradeData();
-//        long ts = 1538409725339216503L;
-//        long seconds = ts / 1_000_000_000;
-//        long nanos = ts % 1_000_000_000;
-//        System.out.println(seconds);
-//        System.out.println(nanos);
-
-//        Thread.sleep(1, 2);
-//        long delayNS = 0;
-//        long durationInMs = TimeUnit.NANOSECONDS.toMillis(delayNS);
-
-//        String utc = Instant.ofEpochSecond(0L, tick.getTimestamp())
-//                .atZone(ZoneId.of("Asia/Kolkata"))
-//                .format(DateTimeFormatter.ofPattern(
-//                        "dd-MM-uuuu HH:mm:ss" ,
-//                        Locale.ENGLISH
-//                ));
-
     }
 
 }

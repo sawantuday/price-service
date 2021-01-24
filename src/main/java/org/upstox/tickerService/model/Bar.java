@@ -13,6 +13,20 @@ public class Bar {
     boolean isClosed;
     long openTime;
 
+    public Bar(int barId){
+        this.id = barId;
+    }
+
+    public Bar(Bar bar){    // deep copy constructor
+        this.id = bar.id;
+        this.open = bar.open;
+        this.close = bar.close;
+        this.low = bar.low;
+        this.high = bar.high;
+        this.isClosed = bar.isClosed;
+        this.volume = bar.volume;
+    }
+
     public Bar(int barId, Tick tick){
         this.id = barId;
         this.openTime = tick.timestamp;
@@ -27,14 +41,25 @@ public class Bar {
     public boolean addTick(Tick tick){
         if(tick.timestamp <= openTime + barLength){
             this.close = tick.price;
-            this.high = tick.price > high ? tick.price : this.high;
-            this.low = tick.price < high ? tick.price : this.high;
             this.volume += tick.quantity;
+            if(tick.price < low){
+                this.low = tick.price;
+            }
+            if (tick.price > high){
+                this.high = tick.price;
+            }
+            if (this.open == 0){    // to cover bars created without tick
+                this.open = tick.price;
+            }
             return true;
         }
 
         isClosed = true;
         return false;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public double getOpen() {
