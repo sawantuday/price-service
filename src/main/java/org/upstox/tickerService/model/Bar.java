@@ -9,12 +9,12 @@ public class Bar {
     String symbol;
 
     int id;
-    int barLength = 15;
-    boolean isClosed;
-    long openTime;
+    transient boolean isClosed;
+    transient double ltp;
 
-    public Bar(int barId){
+    public Bar(int barId, String symbol){
         this.id = barId;
+        this.symbol = symbol;
     }
 
     public Bar(Bar bar){    // deep copy constructor
@@ -25,37 +25,21 @@ public class Bar {
         this.high = bar.high;
         this.isClosed = bar.isClosed;
         this.volume = bar.volume;
+        this.symbol = bar.symbol;
     }
 
-    public Bar(int barId, Tick tick){
-        this.id = barId;
-        this.openTime = tick.timestamp;
-        this.close = tick.price;
-        this.open = tick.price;
-        this.high = tick.price;
-        this.low = tick.price;
+    public void addTick(Tick tick){
+        this.ltp = tick.price;
         this.volume += tick.quantity;
-        this.symbol = tick.symbol;
-    }
-
-    public boolean addTick(Tick tick){
-        if(tick.timestamp <= openTime + barLength){
-            this.close = tick.price;
-            this.volume += tick.quantity;
-            if(tick.price < low){
-                this.low = tick.price;
-            }
-            if (tick.price > high){
-                this.high = tick.price;
-            }
-            if (this.open == 0){    // to cover bars created without tick
-                this.open = tick.price;
-            }
-            return true;
+        if(tick.price < low || this.low == 0){
+            this.low = tick.price;
         }
-
-        isClosed = true;
-        return false;
+        if (tick.price > high){
+            this.high = tick.price;
+        }
+        if (this.open == 0){    // to cover bars created without tick
+            this.open = tick.price;
+        }
     }
 
     public int getId() {
@@ -75,7 +59,7 @@ public class Bar {
     }
 
     public double getClose() {
-        return isClosed ? close : 0;
+        return close;
     }
 
     public long getVolume() {
@@ -88,6 +72,11 @@ public class Bar {
 
     public boolean isClosed() {
         return isClosed;
+    }
+
+    public void setClosed(){
+        this.isClosed = true;
+        this.close = this.ltp;
     }
 
     public String toString(){

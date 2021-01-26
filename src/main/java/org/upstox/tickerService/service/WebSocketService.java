@@ -37,6 +37,7 @@ public class WebSocketService implements Runnable {
     public void subscribe(String user, String ticker){
         logger.log(Level.INFO, "New subscription for {0} by user {1}",
                 new Object[]{ticker, user});
+
         // add to tickerToUser map
         Set<String> userSet = tickerToUsers.getOrDefault(ticker, new HashSet<>());
         userSet.add(user);
@@ -68,13 +69,22 @@ public class WebSocketService implements Runnable {
     @Override
     public void run() {
         while (true){
-            while (barQueue.isEmpty());
-            Bar bar = barQueue.remove();
-            String symbol = bar.getSymbol();
-            // all users subscribed to this ticker
-            Set<String> users = tickerToUsers.getOrDefault(symbol, new HashSet<>());
-            for (String user : users) {
-                sessions.get(user).onBar(bar);  // send message
+            try {
+                while (barQueue.isEmpty()); // wait till we have new bar available
+
+                Bar bar = barQueue.remove();
+                String symbol = bar.getSymbol();
+
+                logger.log(Level.INFO, "New bar received on websocketservice symbol: {0}", symbol);
+
+                // Send to all subscribers of this ticker
+                Set<String> users = tickerToUsers.getOrDefault(symbol, new HashSet<>());
+                for (String user : users) {
+                    sessions.get(user).onBar(bar);  // send message
+                }
+            }catch (Exception e){
+                logger.log(Level.WARNING, "Error while sending bar updates");
+                e.printStackTrace();
             }
         }
     }

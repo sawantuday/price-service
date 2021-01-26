@@ -30,6 +30,12 @@ public class WSServer {
         return session == null ? null : session.getId();
     }
 
+    /**
+     * Apparently a new instance of WSServer is created for each new session.
+     * This method will receive new bars as and when created and if
+     * this session has subscribed to specific ticker
+     * @param bar bar instance
+     */
     public void onBar(Bar bar){
         if(session != null) {
             this.session.getAsyncRemote().sendText(gson.toJson(bar));

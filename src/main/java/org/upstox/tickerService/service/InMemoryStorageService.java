@@ -41,14 +41,20 @@ public class InMemoryStorageService implements StorageService {
                     Bar bar = bars.get(this.sym);
                     int id = startId;
 
-                    if (bar != null) {
-                        Bar barCopy = new Bar(bar); // deep copy
-                        barQueue.add(barCopy);  // send to websocket
-                        history.add(barCopy);   // maintain history for rest api
-                        id = bar.getId() + 1;   // ID for next bar
+                    try {
+                        if (bar != null) {
+                            bar.setClosed();
+                            Bar barCopy = new Bar(bar); // deep copy
+                            barQueue.add(barCopy);  // send to websocket
+                            history.add(barCopy);   // maintain history for rest api
+                            id = bar.getId() + 1;   // ID for next bar
+                        }
+                    }catch(Exception e){
+                        logger.log(Level.WARNING, "Exception while trying to update bar for {0}", this.sym);
+                        e.printStackTrace();
                     }
 
-                    bar = new Bar(id);
+                    bar = new Bar(id, this.sym);
                     bars.put(this.sym, bar);
                     logger.log(Level.INFO, "Generating a new bar: {0} for Symbol: {1}",
                             new Object[]{bar.getId(), this.sym});

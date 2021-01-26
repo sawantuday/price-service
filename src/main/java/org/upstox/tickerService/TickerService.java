@@ -45,7 +45,6 @@ public class TickerService {
         tomcat.addWebapp("", file.getAbsolutePath());
 
         tomcat.start();
-        tomcat.getServer().await();
     }
 
     public void startThreads(){
@@ -60,7 +59,6 @@ public class TickerService {
         System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
 
         TickerService tickerService = new TickerService();
-        tickerService.initTomcat();
         tickerService.startThreads();
     }
 }

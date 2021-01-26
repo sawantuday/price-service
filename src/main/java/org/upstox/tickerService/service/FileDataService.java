@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileDataService implements DataService {
@@ -36,6 +37,7 @@ public class FileDataService implements DataService {
     }
 
     public void getTradeData(){
+        logger.log(Level.INFO, "Getting trade data from file");
         try {
             BufferedReader reader = getBufferedReader();
 
@@ -51,7 +53,8 @@ public class FileDataService implements DataService {
             }
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            logger.log(Level.WARNING, "Error while reading trade data file");
+            e.printStackTrace();
         }
     }
 
@@ -64,10 +67,10 @@ public class FileDataService implements DataService {
         try {
             Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNS));
         } catch (InterruptedException e) {
-            System.out.println(e.getMessage());
+            logger.log(Level.WARNING, "Sleep counter interrupted");
+            e.printStackTrace();
         }
 
-        System.out.println(tick);
         lastMsgTS = tick.getTimestamp();    // update lastMsgTimestamp
         tickerQueue.add(tick);              // send this tick to processing
     }
