@@ -1,11 +1,11 @@
 # Ticker service
 ## How to run 
-1. Download trade data and copy trades.json under src/main/resources directory
+1. Download trade data and copy trades.json under `src/main/resources` directory
 2. Compile and package code with `mvn clean package`
 3. Start server with `java -jar target/tickerService-1.0-SNAPSHOT.jar`  
 
-## WebSocket client example 
-Run this code in Chrome or any other browsers console which supports WebSockets 
+## Example WebSocket Client for quick test 
+Run this code in Chrome or any other browsers console which supports WebSockets  
 This snippet will initiate WebSocket client connection and will 
 subscribe for multiple symbols to receive updates
   
