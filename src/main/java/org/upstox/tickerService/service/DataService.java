@@ -1,5 +1,5 @@
 package org.upstox.tickerService.service;
 
-public interface DataService {
+public interface DataService extends Runnable{
     void onLine(String line);
 }

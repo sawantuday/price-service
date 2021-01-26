@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 /**
  *
  */
-public class InMemoryStorageService implements StorageService, Runnable{
+public class InMemoryStorageService implements StorageService {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 

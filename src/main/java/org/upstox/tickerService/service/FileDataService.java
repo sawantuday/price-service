@@ -13,7 +13,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class FileDataService implements DataService, Runnable {
+public class FileDataService implements DataService {
 
     private final Queue<Tick> tickerQueue;
     private final Gson gson;
