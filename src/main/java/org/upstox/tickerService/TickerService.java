@@ -4,7 +4,7 @@ import org.upstox.tickerService.model.Bar;
 import org.upstox.tickerService.model.Tick;
 import org.upstox.tickerService.service.FileDataService;
 import org.upstox.tickerService.service.InMemoryStorageService;
-import org.upstox.tickerService.service.WebSocketService;
+import org.upstox.tickerService.websocket.WebSocketService;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;

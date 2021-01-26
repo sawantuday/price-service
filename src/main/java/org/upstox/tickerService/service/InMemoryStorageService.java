@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -17,7 +18,7 @@ public class InMemoryStorageService implements StorageService, Runnable{
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     private final Queue<Tick> tickerQueue;
-    private final Queue<Bar> history;  // maintain history of all bars
+    private final Queue<Bar> history;  // maintain history for rest api
     private final Queue<Bar> barQueue;  // to websocket
 
     private Bar bar;
@@ -31,7 +32,7 @@ public class InMemoryStorageService implements StorageService, Runnable{
     }
 
     private void initBar(){
-        logger.info("Starting bar creation routine at 15 second delay");
+        logger.log(Level.INFO, "Starting bar creation routine at 15 second delay");
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -44,7 +45,7 @@ public class InMemoryStorageService implements StorageService, Runnable{
                         history.add(barCopy);   // maintain history for rest api
                     }
                     bar = new Bar(++barId);
-                    logger.info("Generating a new bar: " + bar.getId());
+                    logger.log(Level.INFO, "Generating a new bar: {0}", bar.getId());
                 }
             }
         }, 0, 15000);
@@ -52,10 +53,10 @@ public class InMemoryStorageService implements StorageService, Runnable{
 
     @Override
     public void run() {
-        logger.info("MemoryStorage thread started");
+        logger.log(Level.INFO, "MemoryStorage thread started");
         while(true){    // TODO: add some logic to stop this thread
             while(tickerQueue.isEmpty());   // wait till we get new tick
-            logger.info("Received tick");
+            logger.log(Level.INFO, "Received tick");
             onTick(tickerQueue.remove());   // add it to current bar
         }
     }
@@ -66,12 +67,12 @@ public class InMemoryStorageService implements StorageService, Runnable{
             initBar();
             while (bar==null);
         }
-//        synchronized (barLock){
-//            bar.addTick(tick);
-//            Bar barCopy = new Bar(bar); // deep copy
-//            barQueue.add(barCopy);  // send to websocket
-//        }
-        logger.info("Processed tick for "+ tick.getSymbol()
-                + " on bar "+ bar.getId());
+        synchronized (barLock){
+            bar.addTick(tick);
+            Bar barCopy = new Bar(bar); // deep copy
+            barQueue.add(barCopy);  // send to websocket
+        }
+        logger.log(Level.INFO, "Processed tick for {0} on bar {1}",
+                new Object[]{tick.getSymbol(), bar.getId()});
     }
 }
