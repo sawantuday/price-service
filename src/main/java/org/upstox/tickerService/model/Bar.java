@@ -1,14 +1,31 @@
 package org.upstox.tickerService.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Bar {
+    @SerializedName("o")
     double open;
+
+    @SerializedName("h")
     double high;
+
+    @SerializedName("l")
     double low;
+
+    @SerializedName("c")
     double close;
-    long volume;
+
+    @SerializedName("volume")
+    double volume;
+
+    @SerializedName("symbol")
     String symbol;
 
+    @SerializedName("bar_num")
     int id;
+
+    String event = "ohlc_notify";
+
     transient boolean isClosed;
     transient double ltp;
 
@@ -26,6 +43,7 @@ public class Bar {
         this.isClosed = bar.isClosed;
         this.volume = bar.volume;
         this.symbol = bar.symbol;
+        this.event = bar.event;
     }
 
     public void addTick(Tick tick){
@@ -62,7 +80,7 @@ public class Bar {
         return close;
     }
 
-    public long getVolume() {
+    public double getVolume() {
         return volume;
     }
 
@@ -77,11 +95,12 @@ public class Bar {
     public void setClosed(){
         this.isClosed = true;
         this.close = this.ltp;
+        this.event = "bar_closed";
     }
 
     public String toString(){
         return String.format(
-            "s:%s, o:%f, h:%f, l:%f, c:%f, v:%d, closed:%b",
+            "s:%s, o:%f, h:%f, l:%f, c:%f, v:%f, closed:%b",
             symbol, open, high, low, close, volume, isClosed
         );
     }
