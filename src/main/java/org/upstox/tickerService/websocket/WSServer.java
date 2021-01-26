@@ -53,14 +53,14 @@ public class WSServer {
 
     @OnMessage
     public void onMessage(Message message, Session session){
-        logger.log(Level.INFO, "Message: {0} by session: {1}",
-                new Object[]{message.message, session.getId()});
         if (message.getMessage().equals("subscribe")){
             wsService.subscribe(session.getId(), message.getSymbol());
+            logger.log(Level.INFO, "Subscription request by user: {0}", session.getId());
         }else if(message.getMessage().equals("unsubscribe")){
             wsService.unsubscribe(session.getId(), message.getSymbol());
+            logger.log(Level.INFO, "Unsubscribe request by user: {0}", session.getId());
         }else {
-            logger.log(Level.WARNING, "Unidentified message received: {0} by user: {1}",
+            logger.log(Level.WARNING, "Unidentified message: {0} received from user: {1}",
                     new Object[]{message.getMessage(), session.getId()});
         }
     }

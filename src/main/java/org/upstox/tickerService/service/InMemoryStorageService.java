@@ -3,10 +3,7 @@ package org.upstox.tickerService.service;
 import org.upstox.tickerService.model.Bar;
 import org.upstox.tickerService.model.Tick;
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,33 +16,42 @@ public class InMemoryStorageService implements StorageService, Runnable{
 
     private final Queue<Tick> tickerQueue;
     private final Queue<Bar> history;  // maintain history for rest api
-    private final Queue<Bar> barQueue;  // to websocket
+    private final Queue<Bar> barQueue;  // to WebSocket
 
-    private Bar bar;
+    private final Map<String, Bar> bars;
     private final Object barLock = new Object();
-    private int barId = 0;
+    private final int startId = 1;
 
     public InMemoryStorageService(Queue<Tick> tickerQueue, Queue<Bar> barQueue) {
         this.tickerQueue = tickerQueue;
         this.barQueue = barQueue;
         this.history = new LinkedList<>();
+        this.bars = new HashMap<>();
     }
 
-    private void initBar(){
+    private void initBar(String symbol){
         logger.log(Level.INFO, "Starting bar creation routine at 15 second delay");
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
+            String sym;
             @Override
             public void run() {
+                this.sym = symbol;
                 synchronized (barLock){
-                    // TODO: try to modify this with AutomaticReference
+                    Bar bar = bars.get(this.sym);
+                    int id = startId;
+
                     if (bar != null) {
                         Bar barCopy = new Bar(bar); // deep copy
                         barQueue.add(barCopy);  // send to websocket
                         history.add(barCopy);   // maintain history for rest api
+                        id = bar.getId() + 1;   // ID for next bar
                     }
-                    bar = new Bar(++barId);
-                    logger.log(Level.INFO, "Generating a new bar: {0}", bar.getId());
+
+                    bar = new Bar(id);
+                    bars.put(this.sym, bar);
+                    logger.log(Level.INFO, "Generating a new bar: {0} for Symbol: {1}",
+                            new Object[]{bar.getId(), this.sym});
                 }
             }
         }, 0, 15000);
@@ -63,15 +69,20 @@ public class InMemoryStorageService implements StorageService, Runnable{
 
     @Override
     public void onTick(Tick tick){
-        if(this.bar == null){
-            initBar();
-            while (bar==null);
+        Bar bar = this.bars.get(tick.getSymbol());
+        if(bar == null){
+            initBar(tick.getSymbol());
+            while (bar==null){
+                bar = this.bars.get(tick.getSymbol());
+            };
         }
+
         synchronized (barLock){
             bar.addTick(tick);
             Bar barCopy = new Bar(bar); // deep copy
-            barQueue.add(barCopy);  // send to websocket
+            barQueue.add(barCopy);  // send to WebSocket
         }
+
         logger.log(Level.INFO, "Processed tick for {0} on bar {1}",
                 new Object[]{tick.getSymbol(), bar.getId()});
     }

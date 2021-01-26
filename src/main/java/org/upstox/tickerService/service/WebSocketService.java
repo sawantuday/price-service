@@ -72,7 +72,7 @@ public class WebSocketService implements Runnable {
             Bar bar = barQueue.remove();
             String symbol = bar.getSymbol();
             // all users subscribed to this ticker
-            Set<String> users = tickerToUsers.get(symbol);
+            Set<String> users = tickerToUsers.getOrDefault(symbol, new HashSet<>());
             for (String user : users) {
                 sessions.get(user).onBar(bar);  // send message
             }
